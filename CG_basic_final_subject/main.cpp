@@ -86,6 +86,8 @@ void my_reshape(int width, int height){
 void my_display(){
     // 画面クリア
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Zバッファ有効化
+    glEnable(GL_DEPTH_TEST);
     // テクスチャ有効化
     glEnable(GL_TEXTURE_2D);
 
@@ -93,6 +95,8 @@ void my_display(){
 
     // テクスチャ無効化
     glDisable(GL_TEXTURE_2D);
+    // Zバッファ無効化
+    glDisable(GL_DEPTH_TEST);
     // 最終描画処理
     glFlush();
 }
