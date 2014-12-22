@@ -68,8 +68,22 @@ void my_init(char *progname){
 //
 void my_keyboard(unsigned char key, int x, int y){
     // ESCキーで終了
-    if (key == 27){
-        exit(0);
+    if (key == 27) exit(0);
+
+    // wasdキー
+    switch (key){
+    // 前方
+    case 'w':
+        break;
+    // 左
+    case 'a':
+        break;
+    // 後方
+    case 's':
+        break;
+    // 右
+    case 'd':
+        break;
     }
 }
 
