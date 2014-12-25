@@ -33,10 +33,13 @@ const float BACKGROUND_B = 1.0f;
 namespace{
     // キーボード
     //   各キーの押しているフレーム数(?)を格納
-    int key_w = 0;
-    int key_a = 0;
-    int key_s = 0;
-    int key_d = 0;
+    bool key_w = false;
+    bool key_a = false;
+    bool key_s = false;
+    bool key_d = false;
+
+    // 実行してからの更新回数
+    int update_count = 0;
 }
 
 // -----------------------------------------------
@@ -51,6 +54,8 @@ void my_keyboard(unsigned char key, int x, int y);
 void my_reshape(int width, int height);
 // 描画関数
 void my_display();
+// 更新関数
+void my_idle();
 // デバッグ関数
 void my_debug();
 
@@ -85,14 +90,10 @@ void my_keyboard(unsigned char key, int x, int y){
     if (key == 27) exit(0);
 
     // wasdキー
-    //   前方
-    key == 'w' ? key_w++ : key_w = 0;
-    //   左
-    key == 'a' ? key_a++ : key_a = 0;
-    //   後方
-    key == 's' ? key_s++ : key_s = 0;
-    //   右
-    key == 'd' ? key_d++ : key_d = 0;
+    //if (key == 'w') key_w = true;
+    //if (key == 'a') key_a = true;
+    //if (key == 's') key_s = true;
+    //if (key == 'd') key_d = true;
 }
 
 //
@@ -125,13 +126,32 @@ void my_display(){
 }
 
 //
+// 更新関数
 //
+void my_idle(){
+    // カウントを更新ごとにインクリメント
+    update_count++;
+
+    // 再描画
+    glutPostRedisplay();
+
+    // キー状態初期化
+    //key_w = false;
+    //key_a = false;
+    //key_s = false;
+    //key_d = false;
+}
+
+//
+// デバッグ関数
 //
 void my_debug(){
-    cout << key_w << endl;
-    cout << key_a << endl;
-    cout << key_s << endl;
-    cout << key_d << endl;
+    //cout << key_w << endl;
+    //cout << key_a << endl;
+    //cout << key_s << endl;
+    //cout << key_d << endl;
+    
+    cout << update_count << endl;
 }
 
 //
@@ -146,6 +166,7 @@ int main(int argc, char** argv){
     glutKeyboardFunc(my_keyboard);
     glutReshapeFunc(my_reshape);
     glutDisplayFunc(my_display);
+    glutIdleFunc(my_idle);
 
     // メインループ
     glutMainLoop();
