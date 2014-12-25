@@ -10,21 +10,33 @@
 
 using namespace std;
 
+// ---------------- 定数 ----------------
+
+// ウィンドウサイズ
+const int WINDOW_SIZE_X = 640;
+const int WINDOW_SIZE_Y = 480;
+
+// ウィンドウ出現座標
+const int WINDOW_APPER_X = 100;
+const int WINDOW_APPER_Y = 100;
+
+// 背景色
+const float BACKGROUND_R = 1.0f;
+const float BACKGROUND_G = 0.0f;
+const float BACKGROUND_B = 1.0f;
+
+// --------------------------------------
+
 // ---------------- グローバル変数 ----------------
 
+// 匿名名前空間
 namespace{
-    // ウィンドウサイズ
-    const int WINDOW_SIZE_X = 640;
-    const int WINDOW_SIZE_Y = 480;
-
-    // ウィンドウ出現座標
-    const int WINDOW_APPER_X = 100;
-    const int WINDOW_APPER_Y = 100;
-
-    // 背景色
-    const float BACKGROUND_R = 1.0f;
-    const float BACKGROUND_G = 0.0f;
-    const float BACKGROUND_B = 1.0f;
+    // キーボード
+    //   各キーの押しているフレーム数(?)を格納
+    int key_w = 0;
+    int key_a = 0;
+    int key_s = 0;
+    int key_d = 0;
 }
 
 // -----------------------------------------------
@@ -39,6 +51,8 @@ void my_keyboard(unsigned char key, int x, int y);
 void my_reshape(int width, int height);
 // 描画関数
 void my_display();
+// デバッグ関数
+void my_debug();
 
 // ------------------------------------------
 
@@ -71,20 +85,14 @@ void my_keyboard(unsigned char key, int x, int y){
     if (key == 27) exit(0);
 
     // wasdキー
-    switch (key){
-    // 前方
-    case 'w':
-        break;
-    // 左
-    case 'a':
-        break;
-    // 後方
-    case 's':
-        break;
-    // 右
-    case 'd':
-        break;
-    }
+    //   前方
+    key == 'w' ? key_w++ : key_w = 0;
+    //   左
+    key == 'a' ? key_a++ : key_a = 0;
+    //   後方
+    key == 's' ? key_s++ : key_s = 0;
+    //   右
+    key == 'd' ? key_d++ : key_d = 0;
 }
 
 //
@@ -106,6 +114,7 @@ void my_display(){
     glEnable(GL_TEXTURE_2D);
 
     // ～～～～ここに処理を書く～～～～
+    my_debug();
 
     // テクスチャ無効化
     glDisable(GL_TEXTURE_2D);
@@ -113,6 +122,16 @@ void my_display(){
     glDisable(GL_DEPTH_TEST);
     // 最終描画処理
     glFlush();
+}
+
+//
+//
+//
+void my_debug(){
+    cout << key_w << endl;
+    cout << key_a << endl;
+    cout << key_s << endl;
+    cout << key_d << endl;
 }
 
 //
