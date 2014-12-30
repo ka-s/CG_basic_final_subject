@@ -47,8 +47,6 @@ namespace{
 
 // ---------------- 関数宣言 ----------------
 
-// 初期化関数
-//void my_init(char *progname);
 // キーボード処理関数
 void my_keyboard(unsigned char key, int x, int y);
 // リシェープ関数
@@ -70,32 +68,44 @@ private:
 
 public:
 	My_init(){
-    // 描画モード
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
-    // ウィンドウサイズ設定
-    glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
-    // ウィンドウ出現座標設定
-    glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
-	// ウィンドウタイトル
-    glutCreateWindow("Final_Subject");
-    // 背景色設定
-    glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
-    // 滑らかなライティングに設定
-    glShadeModel(GL_SMOOTH);
-    // Zバッファ使用
-    glEnable(GL_DEPTH_TEST);
-    // 画像データパックの使用
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		// 描画モード
+		glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
+		// ウィンドウサイズ設定
+		glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
+		// ウィンドウ出現座標設定
+		glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
+		// ウィンドウタイトル
+		glutCreateWindow("Final_Subject");
+		// 背景色設定
+		glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
+		// 滑らかなライティングに設定
+		glShadeModel(GL_SMOOTH);
+		// Zバッファ使用
+		glEnable(GL_DEPTH_TEST);
+		// 画像データパックの使用
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	}
 };
 
-// ----------------------------------------
+// デバッグクラス
+class My_debug{
+private:
 
-//
-// 初期化関数
-//
-void my_init(char *progname){
-}
+public:
+	void do_debug(){
+		//cout << key_w << endl;
+		//cout << key_a << endl;
+		//cout << key_s << endl;
+		//cout << key_d << endl;
+
+		cout << update_count << endl;
+	}
+};
+
+// クラスのポインタ
+std::shared_ptr<My_debug> debug;
+
+// ----------------------------------------
 
 //
 // キーボード処理関数
@@ -130,7 +140,7 @@ void my_display(){
     glEnable(GL_TEXTURE_2D);
 
     // ～～～～ここに処理を書く～～～～
-    my_debug();
+	debug->do_debug();
 
     // テクスチャ無効化
     glDisable(GL_TEXTURE_2D);
@@ -158,24 +168,11 @@ void my_idle(){
 }
 
 //
-// デバッグ関数
-//
-void my_debug(){
-    //cout << key_w << endl;
-    //cout << key_a << endl;
-    //cout << key_s << endl;
-    //cout << key_d << endl;
-    
-    cout << update_count << endl;
-}
-
-//
 // メイン関数
 //
 int main(int argc, char** argv){
     // 初期化
     glutInit(&argc, argv);
-    //my_init(argv[0]);
 	My_init init;
 
     // 関数
