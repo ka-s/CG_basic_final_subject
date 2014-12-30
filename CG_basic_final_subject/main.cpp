@@ -2,10 +2,11 @@
 ///  CG基礎最終課題 
 /// ================================
 
-// @date    2015-01-??
+// @date    2015-01-16
 // @author  Kazuma Ito
 
 #include <iostream>
+#include <memory>
 #include <GL/glut.h>
 
 using namespace std;
@@ -47,7 +48,7 @@ namespace{
 // ---------------- 関数宣言 ----------------
 
 // 初期化関数
-void my_init(char *progname);
+//void my_init(char *progname);
 // キーボード処理関数
 void my_keyboard(unsigned char key, int x, int y);
 // リシェープ関数
@@ -61,17 +62,22 @@ void my_debug();
 
 // ------------------------------------------
 
-//
-// 初期化関数
-//
-void my_init(char *progname){
+// ---------------- クラス ----------------
+
+// 初期化クラス
+class My_init{
+private:
+
+public:
+	My_init(){
     // 描画モード
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
     // ウィンドウサイズ設定
     glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
     // ウィンドウ出現座標設定
     glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
-    glutCreateWindow(progname);
+	// ウィンドウタイトル
+    glutCreateWindow("Final_Subject");
     // 背景色設定
     glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
     // 滑らかなライティングに設定
@@ -80,6 +86,15 @@ void my_init(char *progname){
     glEnable(GL_DEPTH_TEST);
     // 画像データパックの使用
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	}
+};
+
+// ----------------------------------------
+
+//
+// 初期化関数
+//
+void my_init(char *progname){
 }
 
 //
@@ -160,7 +175,8 @@ void my_debug(){
 int main(int argc, char** argv){
     // 初期化
     glutInit(&argc, argv);
-    my_init(argv[0]);
+    //my_init(argv[0]);
+	My_init init;
 
     // 関数
     glutKeyboardFunc(my_keyboard);

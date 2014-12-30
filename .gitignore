@@ -2,6 +2,8 @@
 *.opensdf
 *.suo
 *.v12
+*.vcxproj
+*.filters
 ipch/
 Debug/
 Release/
