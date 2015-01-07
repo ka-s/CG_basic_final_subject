@@ -62,49 +62,104 @@ void my_debug();
 
 // ---------------- クラス ----------------
 
+//
+// ライト設定クラス
+//
+class make_Light{
+private:
+
+public:
+    make_Light(float* diffuse, float* specular, float* ambient){
+
+    }
+};
+
+//
+// ライト管理クラス
+//
+class Light_manager{
+private:
+
+public:
+    Light_manager(){
+        glEnable(GL_LIGHT0);
+    }    
+};
+std::shared_ptr<Light_manager> light_manager;
+
+//
 // 初期化クラス
+//
 class My_init{
 private:
 
 public:
-	My_init(){
-		// 描画モード
-		glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
-		// ウィンドウサイズ設定
-		glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
-		// ウィンドウ出現座標設定
-		glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
-		// ウィンドウタイトル
-		glutCreateWindow("Final_Subject");
-		// 背景色設定
-		glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
-		// 滑らかなライティングに設定
-		glShadeModel(GL_SMOOTH);
-		// Zバッファ使用
-		glEnable(GL_DEPTH_TEST);
-		// 画像データパックの使用
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	}
-};
+    My_init(){
+        // 描画モード
+        glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
+        // ウィンドウサイズ設定
+        glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
+        // ウィンドウ出現座標設定
+        glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
+        // ウィンドウタイトル
+        glutCreateWindow("Final_Subject");
+        // 背景色設定
+        glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
+        // 滑らかなライティングに設定
+        glShadeModel(GL_SMOOTH);
+        // Zバッファ使用
+        glEnable(GL_DEPTH_TEST);
+        // 画像データパックの使用
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+        // ライト管理クラス
+        light_manager = std::make_shared<Light_manager>();
+    }
+};
+std::shared_ptr<My_init> init;
+
+//
+// 描画クラス
+//
+class My_display{
+private:
+
+public:
+    // 描画関数
+    void draw(){
+
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glBegin(GL_POLYGON);
+        glNormal3f(0.0f, 1.0f, 0.0f);
+        glVertex3f(1.0f, 0.0f, -1.0f);
+        glVertex3f(1.0f, 0.0f, 1.0f);
+        glVertex3f(-1.0f, 0.0f, 1.0f);
+        glVertex3f(-1.0f, 0.0f, -1.0f);
+        glEnd();
+
+    }
+};
+std::shared_ptr<My_display> display;
+
+//
 // デバッグクラス
+//
 class My_debug{
 private:
 
 public:
-	void do_debug(){
-		//cout << key_w << endl;
-		//cout << key_a << endl;
-		//cout << key_s << endl;
-		//cout << key_d << endl;
+    void do_debug(){
+        //cout << key_w << endl;
+        //cout << key_a << endl;
+        //cout << key_s << endl;
+        //cout << key_d << endl;
 
-		cout << update_count << endl;
-	}
+        cout << update_count << endl;
+    }
 };
-
-// クラスのポインタ
 std::shared_ptr<My_debug> debug;
 
+// ----------------------------------------
 // ----------------------------------------
 
 //
@@ -140,7 +195,8 @@ void my_display(){
     glEnable(GL_TEXTURE_2D);
 
     // ～～～～ここに処理を書く～～～～
-	debug->do_debug();
+    display->draw();
+    debug->do_debug();
 
     // テクスチャ無効化
     glDisable(GL_TEXTURE_2D);
@@ -173,7 +229,9 @@ void my_idle(){
 int main(int argc, char** argv){
     // 初期化
     glutInit(&argc, argv);
-	My_init init;
+    init = std::make_shared<My_init>();
+    display = std::make_shared<My_display>();
+    debug = std::make_shared<My_debug>();
 
     // 関数
     glutKeyboardFunc(my_keyboard);
