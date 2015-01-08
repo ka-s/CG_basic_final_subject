@@ -11,7 +11,8 @@
 
 using namespace std;
 
-// ---------------- 定数 ----------------
+//  定数
+// ----------------------------------------------------------------
 
 // ウィンドウサイズ
 const int WINDOW_SIZE_X = 640;
@@ -26,9 +27,10 @@ const float BACKGROUND_R = 1.0f;
 const float BACKGROUND_G = 0.0f;
 const float BACKGROUND_B = 1.0f;
 
-// --------------------------------------
+// ----------------------------------------------------------------
 
-// ---------------- グローバル変数 ----------------
+//  グローバル変数
+// ----------------------------------------------------------------
 
 // 匿名名前空間
 namespace{
@@ -41,11 +43,13 @@ namespace{
 
     // 実行してからの更新回数
     int update_count = 0;
+
 }
 
-// -----------------------------------------------
+// ----------------------------------------------------------------
 
-// ---------------- 関数宣言 ----------------
+//  関数宣言
+// ----------------------------------------------------------------
 
 // キーボード処理関数
 void my_keyboard(unsigned char key, int x, int y);
@@ -58,7 +62,7 @@ void my_idle();
 // 初期化関数
 void my_init();
 
-// ------------------------------------------
+// ----------------------------------------------------------------
 
 //
 // キーボード処理関数
@@ -67,11 +71,6 @@ void my_keyboard(unsigned char key, int x, int y){
     // ESCキーで終了
     if (key == 27) exit(0);
 
-    // wasdキー
-    //if (key == 'w') key_w = true;
-    //if (key == 'a') key_a = true;
-    //if (key == 's') key_s = true;
-    //if (key == 'd') key_d = true;
 }
 
 //
@@ -100,45 +99,38 @@ void my_display(){
     glDisable(GL_DEPTH_TEST);
     // 最終描画処理
     glFlush();
+
 }
 
 //
 // 更新関数
 //
 void my_idle(){
-    // カウントを更新ごとにインクリメント
-    update_count++;
-
     // 再描画
     glutPostRedisplay();
 
-    // キー状態初期化
-    //key_w = false;
-    //key_a = false;
-    //key_s = false;
-    //key_d = false;
 }
 
 // 
 // 初期化関数
 //
 void my_init(){
-	// 描画モード
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
-	// ウィンドウサイズ設定
-	glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
-	// ウィンドウ出現座標設定
-	glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
-	// ウィンドウタイトル
-	glutCreateWindow("Final_Subject");
-	// 背景色設定
-	glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
-	// 滑らかなライティングに設定
-	glShadeModel(GL_SMOOTH);
-	// Zバッファ使用
-	glEnable(GL_DEPTH_TEST);
-	// 画像データパックの使用
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // 描画モード
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
+    // ウィンドウサイズ設定
+    glutInitWindowSize(WINDOW_SIZE_X, WINDOW_SIZE_Y);
+    // ウィンドウ出現座標設定
+    glutInitWindowPosition(WINDOW_APPER_X, WINDOW_APPER_Y);
+    // ウィンドウタイトル
+    glutCreateWindow("Final_Subject");
+    // 背景色設定
+    glClearColor(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.0f);
+    // 滑らかなライティングに設定
+    glShadeModel(GL_SMOOTH);
+    // Zバッファ使用
+    glEnable(GL_DEPTH_TEST);
+    // 画像データパックの使用
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 }
 
@@ -148,7 +140,7 @@ void my_init(){
 int main(int argc, char** argv){
     // 初期化
     glutInit(&argc, argv);
-	my_init();
+    my_init();
 
     // 関数
     glutKeyboardFunc(my_keyboard);
