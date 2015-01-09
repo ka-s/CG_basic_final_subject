@@ -21,6 +21,8 @@ const int WINDOW_SIZE_Y = 480;
 
 // 床の最大生成数
 const int MAX_FLOORS = 3;
+// 木の最大生成数
+const int MAX_TREE = 16;
 
 // --------------------------------
 //  構造体
@@ -41,18 +43,20 @@ struct Pos{
 // 匿名名前空間
 namespace{
     // 雪だるまの移動速度
-    float move_speed_snow_man = 0.5;
+    float move_speed_snow_man = 0.5f;
     // 雪だるまの前進速度
-    float front_speed_snow_man = 0.01;
+    float front_speed_snow_man = 0.101f;
+    // 木の最大間隔
+    float tree_space = 8.0f;
 
     // カメラの座標
     Pos pos_camera;
     // 雪だるまの座標
     Pos pos_snow_man;
     // 床の座標
-    Pos pos_floor[3];
+    Pos pos_floor[MAX_FLOORS];
     // 木の座標
-    Pos pos_tree;
+    Pos pos_tree[MAX_TREE];
 
     // マテリアル
     //   真珠のマテリアル
@@ -75,8 +79,6 @@ namespace{
 
 // 雪だるま描画関数
 void draw_snow_man(Pos pos);
-// 木描画関数
-void draw_tree(Pos pos);
 
 // キーボード処理関数
 void my_keyboard(unsigned char key, int x, int y);
@@ -175,44 +177,64 @@ public:
 shared_ptr<Floor> floors[MAX_FLOORS];
 
 // ================================
-//  木描画関数
+//  木描画クラス
 // ================================
-void draw_tree(Pos pos){
-    glPushMatrix();
+class Tree{
+private:
+    float x, y, z;
 
-    // 座標
-    glTranslatef(pos.x, pos.y + 1.0, pos.z);
+public:
+    // コンストラクタ
+    Tree(Pos pos){
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
+    }
 
-    glPushMatrix();
-    glScalef(1.0f, 4.0f, 1.0f);
-    // 青
-    glColor3f(0.0f, 0.0f, 1.0f);
-    // 木の幹
-    glutSolidCube(1.0);
-    glPopMatrix();
+    // 描画メソッド
+    void draw(float player_pos){
+        glPushMatrix();
 
-    glTranslatef(0.0f, 0.5f, 0.0f);
+        // 座標
+        glTranslatef(x, y + 1.0, z);
 
-    //   葉っぱ1段目
-    glPushMatrix();
-    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glutSolidCone(2.0, 2.0, 32, 32);
-    glPopMatrix();
+        glPushMatrix();
+        glScalef(1.0f, 4.0f, 1.0f);
+        // 青
+        glColor3f(0.0f, 0.0f, 1.0f);
+        // 木の幹
+        glutSolidCube(1.0);
+        glPopMatrix();
 
-    //   葉っぱ2段目
-    glPushMatrix();
-    glTranslatef(0.0f, 1.0f, 0.0f);
-    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glutSolidCone(1.5, 2.0, 32, 32);
-    glPopMatrix();
+        glTranslatef(0.0f, 0.5f, 0.0f);
 
-    glPopMatrix();
+        //   葉っぱ1段目
+        glPushMatrix();
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glutSolidCone(2.0, 2.0, 32, 32);
+        glPopMatrix();
 
-    glPopMatrix();
+        //   葉っぱ2段目
+        glPushMatrix();
+        glTranslatef(0.0f, 1.0f, 0.0f);
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glutSolidCone(1.5, 2.0, 32, 32);
+        glPopMatrix();
 
-}
+        glPopMatrix();
+
+        glPopMatrix();
+
+        // 木ループ制御
+        if (player_pos < z - 16.0f){
+            z -= 8 * (MAX_TREE / 2);
+        }
+    }
+
+};
+shared_ptr<Tree> trees[MAX_TREE];
 
 // ================================
 //  キーボード処理関数
@@ -221,9 +243,15 @@ void my_keyboard(unsigned char key, int x, int y){
     // ESCキーで終了
     if (key == 27) exit(0);
 
-    // a,dキー
+    // 左右移動
     if (key == 'a') pos_snow_man.x -= move_speed_snow_man;
     if (key == 'd') pos_snow_man.x += move_speed_snow_man;
+
+    // 加速減速
+    if (key == 'w') front_speed_snow_man += 0.02;
+    if (key == 's') front_speed_snow_man -= 0.02;
+    // スピード制御
+    if (front_speed_snow_man < 0) front_speed_snow_man = 0.001;
 
     // 再描画
     glutPostRedisplay();
@@ -271,7 +299,10 @@ void my_display(){
     }
 
     // 木を描画
-    draw_tree(pos_tree);
+    //draw_tree(pos_tree);
+    for (int i = 0; i < MAX_TREE; ++i){
+        trees[i]->draw(pos_snow_man.z);
+    }
 
     // テクスチャ無効化
     glDisable(GL_TEXTURE_2D);
@@ -304,12 +335,21 @@ void pos_init(){
     pos_camera = { 0.0f, 4.0f, 16.0f };
     // 雪だるまの座標初期化
     pos_snow_man = { 0.0f, 1.0f, 0.0f };
+
     // 地面の座標初期化
     for (int i = 0; i < MAX_FLOORS; ++i){
         pos_floor[i] = { -32.0f, 0.0f, -32.0f * i };
     }
+
     // 木の座標初期化
-    pos_tree = { 4.0f, 0.0f, 0.0f };
+    //   右側
+    for (int i = 0; i < MAX_TREE / 2; ++i){
+        pos_tree[i] = { tree_space, 0.0f, -8.0f * i };
+    }
+    //   左側
+    for (int i = MAX_TREE / 2; i < MAX_TREE; ++i){
+        pos_tree[i] = { -tree_space, 0.0f, -8.0f * (i - MAX_TREE / 2) };
+    }
 
 }
 
@@ -361,7 +401,7 @@ void my_init(){
     // 透視投影の設定
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.1, 32.0);
+    gluPerspective(60.0, aspect, 0.1, 64.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -373,6 +413,11 @@ void my_init(){
     // 床クラスの生成
     for (int i = 0; i < MAX_FLOORS; ++i){
         floors[i] = make_shared<Floor>(pos_floor[i]);
+    }
+
+    // 木クラスの生成
+    for (int i = 0; i < MAX_TREE; ++i){
+        trees[i] = make_shared<Tree>(pos_tree[i]);
     }
 
 }
