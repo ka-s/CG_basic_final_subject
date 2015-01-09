@@ -19,6 +19,9 @@ using namespace std;
 const int WINDOW_SIZE_X = 640;
 const int WINDOW_SIZE_Y = 480;
 
+// 床の最大生成数
+const int MAX_FLOORS = 3;
+
 // --------------------------------
 //  構造体
 // --------------------------------
@@ -47,7 +50,7 @@ namespace{
     // 雪だるまの座標
     Pos pos_snow_man;
     // 床の座標
-    Pos pos_floor;
+    Pos pos_floor[3];
     // 木の座標
     Pos pos_tree;
 
@@ -72,8 +75,6 @@ namespace{
 
 // 雪だるま描画関数
 void draw_snow_man(Pos pos);
-// 地面描画関数
-void draw_floor(Pos pos);
 // 木描画関数
 void draw_tree(Pos pos);
 
@@ -133,24 +134,45 @@ void draw_snow_man(Pos pos){
 }
 
 // ================================
-//  地面描画関数
+//  地面描画クラス
 // ================================
-void draw_floor(Pos pos){
-    // 地面の大きさ(直径)
-    static float floor_size = 64.0;
+class Floor{
+private:
+    float x, y, z;
+    float player_pos;
 
-    // 赤
-    glColor3f(0.5f, 0.5f, 0.5f);
-    // 正方形を描画
-    glBegin(GL_POLYGON);
-    glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(pos.x, pos.y, pos.z);
-    glVertex3f(pos.x + floor_size, pos.y, pos.z);
-    glVertex3f(pos.x + floor_size, pos.y, pos.z + floor_size);
-    glVertex3f(pos.x, pos.y, pos.z + floor_size);
-    glEnd();
+public:
+    // コンストラクタ
+    Floor(Pos pos){
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
+    }
 
-}
+    // 描画メソッド
+    void draw(float player_pos){
+        // 地面の大きさ(直径)
+        static float floor_size = 64.0;
+
+        // 赤
+        glColor3f(0.5f, 0.5f, 0.5f);
+        // 正方形を描画
+        glBegin(GL_POLYGON);
+        glNormal3f(0.0f, 1.0f, 0.0f);
+        glVertex3f(x, y, z);
+        glVertex3f(x + floor_size, y, z);
+        glVertex3f(x + floor_size, y, z + floor_size);
+        glVertex3f(x, y, z + floor_size);
+        glEnd();
+
+        // 地面ループ制御
+        if (player_pos < z){
+            z -= 64;
+        }
+    }
+
+};
+shared_ptr<Floor> floors[MAX_FLOORS];
 
 // ================================
 //  木描画関数
@@ -244,7 +266,10 @@ void my_display(){
     // 雪だるまを描画
     draw_snow_man(pos_snow_man);
     // 地面を描画
-    draw_floor(pos_floor);
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        floors[i]->draw(pos_snow_man.z);
+    }
+
     // 木を描画
     draw_tree(pos_tree);
 
@@ -280,7 +305,9 @@ void pos_init(){
     // 雪だるまの座標初期化
     pos_snow_man = { 0.0f, 1.0f, 0.0f };
     // 地面の座標初期化
-    pos_floor = { -32.0f, 0.0f, -32.0f };
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        pos_floor[i] = { -32.0f, 0.0f, -32.0f * i };
+    }
     // 木の座標初期化
     pos_tree = { 4.0f, 0.0f, 0.0f };
 
@@ -342,6 +369,11 @@ void my_init(){
     pos_init();
     // 光源初期化
     light_init();
+
+    // 床クラスの生成
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        floors[i] = make_shared<Floor>(pos_floor[i]);
+    }
 
 }
 
