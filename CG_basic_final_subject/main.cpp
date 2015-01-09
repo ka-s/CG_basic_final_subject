@@ -6,7 +6,6 @@
 // @author  Kazuma Ito
 
 #include <iostream>
-#include <memory>
 #include <GL/glut.h>
 
 using namespace std;
@@ -184,7 +183,7 @@ public:
     }
 
 };
-shared_ptr<Floor> floors[MAX_FLOORS];
+Floor* floors[MAX_FLOORS];
 
 // ================================
 //  木描画クラス
@@ -251,7 +250,7 @@ public:
     }
 
 };
-shared_ptr<Tree> trees[MAX_TREE];
+Tree* trees[MAX_TREE];
 
 // ================================
 //  キーボード処理関数
@@ -268,7 +267,26 @@ void my_keyboard(unsigned char key, int x, int y){
     if (key == 'w') front_speed_snow_man += 0.02;
     if (key == 's') front_speed_snow_man -= 0.02;
     // スピード制御
-    if (front_speed_snow_man < 0) front_speed_snow_man = 0.001;
+    if (front_speed_snow_man > 10.0f) front_speed_snow_man = 2.0f;
+    if (front_speed_snow_man < 0.0f) front_speed_snow_man = 0.001f;
+
+    // やり直し
+    if (key == 'r'){
+        for (int i = 0; i < MAX_FLOORS; ++i){
+            delete floors[i];
+        }
+        for (int i = 0; i < MAX_TREE; ++i){
+            delete trees[i];
+        }
+        for (int i = 0; i < MAX_FLOORS; ++i){
+            floors[i] = new Floor(pos_floor[i]);
+        }
+        for (int i = 0; i < MAX_TREE; ++i){
+            trees[i] = new Tree(pos_tree[i]);
+        }
+        pos_init();
+        front_speed_snow_man = 0.101f;
+    }
 
     // 再描画
     glutPostRedisplay();
@@ -435,12 +453,12 @@ void my_init(){
 
     // 床クラスの生成
     for (int i = 0; i < MAX_FLOORS; ++i){
-        floors[i] = make_shared<Floor>(pos_floor[i]);
+        floors[i] = new Floor(pos_floor[i]);
     }
 
     // 木クラスの生成
     for (int i = 0; i < MAX_TREE; ++i){
-        trees[i] = make_shared<Tree>(pos_tree[i]);
+        trees[i] = new Tree(pos_tree[i]);
     }
 
 }
@@ -461,6 +479,14 @@ int main(int argc, char** argv){
 
     // メインループ
     glutMainLoop();
+
+    // メモリ解放
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        delete floors[i];
+    }
+    for (int i = 0; i < MAX_TREE; ++i){
+        delete trees[i];
+    }
 
     return 0;
 }
