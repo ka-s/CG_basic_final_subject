@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <memory>
+#include <random>
 #include <GL/glut.h>
 
 using namespace std;
@@ -23,6 +24,8 @@ const int WINDOW_SIZE_Y = 480;
 const int MAX_FLOORS = 3;
 // 木の最大生成数
 const int MAX_TREE = 16;
+// 雪の最大生成数
+const int MAX_SNOW = 256;
 
 // --------------------------------
 //  構造体
@@ -252,6 +255,43 @@ public:
 
 };
 shared_ptr<Tree> trees[MAX_TREE];
+
+// ================================
+//  雪描画クラス
+// ================================
+class Snow{
+private:
+    float x, y, z;
+
+public:
+    // コンストラクタ
+    Snow(Pos pos){
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
+    }
+
+    // 描画メソッド
+    void draw(float player_pos){
+        glPushMatrix();
+
+        // 座標
+        glTranslatef(x, 10.0f, player_pos);
+        // 真珠
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, pearl_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, pearl_specular);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, pearl_ambient);
+        glMaterialf(GL_FRONT, GL_SHININESS, pearl_shininess);
+        // 球
+        glutSolidSphere(0.1, 32, 32);
+
+        glPopMatrix();
+
+        if (y < -1.0f){
+            y = 10.0f;
+        }
+    }
+};
 
 // ================================
 //  キーボード処理関数
