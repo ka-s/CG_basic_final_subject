@@ -6,6 +6,7 @@
 // @author  Kazuma Ito
 
 #include <iostream>
+#include <cmath>
 #include <GL/glut.h>
 
 using namespace std;
@@ -18,10 +19,39 @@ using namespace std;
 const int WINDOW_SIZE_X = 640;
 const int WINDOW_SIZE_Y = 480;
 
+// ★ゲーム性に影響を与える変数
+//     雪だるまの左右移動速度
+const float move_speed_snow_man = 1.0f;
+//     左右の木の最大間隔
+const float tree_space = 16.0f;
+//     ランダム木の前後間隔
+const float random_tree_space = 8.0f;
+
 // 床の最大生成数
 const int MAX_FLOORS = 3;
 // 木の最大生成数
 const int MAX_TREE = 16;
+// ランダムに出現する木の最大生成数
+const int MAX_RANDOM_TREE = 32;
+
+// マテリアル
+//   真珠のマテリアル
+const float pearl_diffuse[] = { 1, 0.829, 0.829, 1.0 };
+const float pearl_specular[] = { 0.296648, 0.296648, 0.296648, 1.0 };
+const float pearl_ambient[] = { 0.25, 0.20725, 0.20725, 1.0 };
+const float pearl_shininess = 10.24;
+
+//   緑のプラスチックのマテリアル
+const float green_plastic_diffuse[] = { 0.1, 0.35, 0.1, 1.0 };
+const float green_plastic_specular[] = { 0.45, 0.55, 0.45, 1.0 };
+const float green_plastic_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+const float green_plastic_shininess = 32;
+
+// 銅のマテリアル
+const float copper_ambient[] = { 0.19125, 0.0735, 0.0225, 1.0 };
+const float copper_diffuse[] = { 0.7038, 0.27048, 0.0828, 1.0 };
+const float copper_specular[] = { 0.256777, 0.137622, 0.086014, 1.0 };
+const float copper_shininess = 12.8;
 
 // --------------------------------
 //  構造体
@@ -41,15 +71,6 @@ struct Pos{
 
 // 匿名名前空間
 namespace{
-    // 雪だるまの移動速度
-    float move_speed_snow_man = 0.5f;
-    // 雪だるまの前進速度
-    float front_speed_snow_man = 0.101f;
-    // 木の最大間隔
-    float tree_space = 16.0f;
-
-    // 光源の座標
-    float light_pos[] = { 0.0f, 10.0f, 0.0f };
     // カメラの座標
     Pos pos_camera;
     // 雪だるまの座標
@@ -58,28 +79,14 @@ namespace{
     Pos pos_floor[MAX_FLOORS];
     // 木の座標
     Pos pos_tree[MAX_TREE];
+    // ランダム生成の木の座標
+    Pos pos_random_tree[MAX_RANDOM_TREE];
+
+    // 雪だるまの初期前進速度
+    float front_speed_snow_man = 0.101f;
 
     // 画像データ
     unsigned char texImage[128][128][3];
-
-    // マテリアル
-    //   真珠のマテリアル
-    float pearl_diffuse[] = { 1, 0.829, 0.829, 1.0 };
-    float pearl_specular[] = { 0.296648, 0.296648, 0.296648, 1.0 };
-    float pearl_ambient[] = { 0.25, 0.20725, 0.20725, 1.0 };
-    float pearl_shininess = 10.24;
-
-    //   緑のプラスチックのマテリアル
-    float green_plastic_diffuse[] = { 0.1, 0.35, 0.1, 1.0 };
-    float green_plastic_specular[] = { 0.45, 0.55, 0.45, 1.0 };
-    float green_plastic_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-    float green_plastic_shininess = 32;
-
-    // 銅のマテリアル
-    float copper_ambient[] = { 0.19125, 0.0735, 0.0225, 1.0 };
-    float copper_diffuse[] = { 0.7038, 0.27048, 0.0828, 1.0 };
-    float copper_specular[] = { 0.256777, 0.137622, 0.086014, 1.0 };
-    float copper_shininess = 12.8;
 
 }
 
@@ -88,7 +95,7 @@ namespace{
 // --------------------------------
 
 // RAW読み込み関数
-void readRAWImage(char* filename);
+void readRAWImage(char* filename, unsigned char image[128][128][3]);
 
 // 雪だるま描画関数
 void draw_snow_man(Pos pos);
@@ -112,7 +119,7 @@ void my_init();
 // ================================
 //  RAW読み込み関数
 // ================================
-void readRAWImage(char* filename, unsigned char* image){
+void readRAWImage(char* filename, unsigned char image[128][128][3]){
     FILE *fp;
 
     if (fopen_s(&fp, filename, "r")){
@@ -122,6 +129,13 @@ void readRAWImage(char* filename, unsigned char* image){
 
     fread(image, 1, 128 * 128 * 3, fp);
     fclose(fp);
+}
+
+// ================================
+//  ランダム木のランダムな座標を生成する関数
+// ================================
+float get_tree_random_pos(){
+    return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
 }
 
 // ================================
@@ -222,7 +236,7 @@ public:
     }
 
     // 描画メソッド
-    void draw(float player_pos){
+    void draw(float player_pos, float loop_space){
         glPushMatrix();
 
         // 座標
@@ -266,12 +280,22 @@ public:
 
         // 木ループ制御
         if (player_pos < z - 16.0f){
-            z -= 8 * (MAX_TREE / 2);
+            // ランダム木ならば配置しなおし
+            if (loop_space == random_tree_space){
+                z -= loop_space * MAX_RANDOM_TREE;
+                x = get_tree_random_pos();
+            }
+            else{
+                z -= loop_space / 2 * (MAX_TREE / 2);
+            }
         }
     }
 
 };
+// 左右の木
 Tree* trees[MAX_TREE];
+// ランダムに出現する木
+Tree* random_trees[MAX_RANDOM_TREE];
 
 // ================================
 //  キーボード処理関数
@@ -299,12 +323,20 @@ void my_keyboard(unsigned char key, int x, int y){
         for (int i = 0; i < MAX_TREE; ++i){
             delete trees[i];
         }
+        for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+            delete random_trees[i];
+        }
+
         for (int i = 0; i < MAX_FLOORS; ++i){
             floors[i] = new Floor(pos_floor[i]);
         }
         for (int i = 0; i < MAX_TREE; ++i){
             trees[i] = new Tree(pos_tree[i]);
         }
+        for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+            random_trees[i] = new Tree(pos_random_tree[i]);
+        }
+
         pos_init();
         front_speed_snow_man = 0.101f;
     }
@@ -336,15 +368,11 @@ void my_display(){
     // 行列の初期化
     glLoadIdentity();
 
-    // ～～～～ここに処理を書く～～～～
     // カメラの設定
     gluLookAt(
         pos_snow_man.x, pos_camera.y, pos_camera.z,
         pos_snow_man.x, pos_snow_man.y, pos_snow_man.z,
         0.0, 1.0, 0.0);
-
-    // 光源を設置
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
 
     // 雪だるまを描画
     draw_snow_man(pos_snow_man);
@@ -354,9 +382,13 @@ void my_display(){
     }
 
     // 木を描画
-    //draw_tree(pos_tree);
     for (int i = 0; i < MAX_TREE; ++i){
-        trees[i]->draw(pos_snow_man.z);
+        trees[i]->draw(pos_snow_man.z, tree_space);
+    }
+
+    // ランダムな木を描画
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        random_trees[i]->draw(pos_snow_man.z, random_tree_space);
     }
 
     // テクスチャ無効化
@@ -378,11 +410,6 @@ void my_idle(){
     pos_snow_man.z -= front_speed_snow_man;
     // カメラの前進
     pos_camera.z -= front_speed_snow_man;
-
-    // 光源の座標を設定
-    light_pos[0] = pos_snow_man.x;
-    light_pos[1] = pos_snow_man.y + 10.0f;
-    light_pos[2] = pos_snow_man.z;
 
     // 再描画
     glutPostRedisplay();
@@ -413,6 +440,14 @@ void pos_init(){
         pos_tree[i] = { -tree_space, 0.0f, -8.0f * (i - MAX_TREE / 2) };
     }
 
+    // ランダム生成される木の座標初期化
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        pos_random_tree[i] = { 
+            get_tree_random_pos(), 
+            0.0f, 
+            -random_tree_space * i - 64.0f};
+    }
+
 }
 
 // ================================
@@ -420,11 +455,13 @@ void pos_init(){
 // ================================
 void light_init(){
     // 光源属性の色
+    float light_pos[] = { 1.0f, 1.0f, 1.0f, 0.0f };
     float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 
     // 各光源属性の設定
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
@@ -482,8 +519,13 @@ void my_init(){
         trees[i] = new Tree(pos_tree[i]);
     }
 
+    // ランダム木クラスの生成
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        random_trees[i] = new Tree(pos_random_tree[i]);
+    }
+
     // 画像読み込み
-    readRAWImage("texture1.raw", texImage);
+    //readRAWImage("texture1.raw", texImage);
 
 }
 
