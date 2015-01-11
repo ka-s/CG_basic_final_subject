@@ -46,7 +46,7 @@ namespace{
     // 雪だるまの前進速度
     float front_speed_snow_man = 0.101f;
     // 木の最大間隔
-    float tree_space = 8.0f;
+    float tree_space = 16.0f;
 
     // 光源の座標
     float light_pos[] = { 0.0f, 10.0f, 0.0f };
@@ -58,6 +58,9 @@ namespace{
     Pos pos_floor[MAX_FLOORS];
     // 木の座標
     Pos pos_tree[MAX_TREE];
+
+    // 画像データ
+    unsigned char texImage[128][128][3];
 
     // マテリアル
     //   真珠のマテリアル
@@ -84,6 +87,9 @@ namespace{
 //  関数宣言
 // --------------------------------
 
+// RAW読み込み関数
+void readRAWImage(char* filename);
+
 // 雪だるま描画関数
 void draw_snow_man(Pos pos);
 
@@ -102,6 +108,21 @@ void pos_init();
 void light_init();
 // 初期化関数
 void my_init();
+
+// ================================
+//  RAW読み込み関数
+// ================================
+void readRAWImage(char* filename, unsigned char* image){
+    FILE *fp;
+
+    if (fopen_s(&fp, filename, "r")){
+        fprintf(stderr, "Cannot open raw file %s\n", filename);
+        exit(1);
+    }
+
+    fread(image, 1, 128 * 128 * 3, fp);
+    fclose(fp);
+}
 
 // ================================
 //  雪だるま描画関数
@@ -460,6 +481,9 @@ void my_init(){
     for (int i = 0; i < MAX_TREE; ++i){
         trees[i] = new Tree(pos_tree[i]);
     }
+
+    // 画像読み込み
+    readRAWImage("texture1.raw", texImage);
 
 }
 
