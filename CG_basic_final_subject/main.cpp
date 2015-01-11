@@ -20,11 +20,15 @@ const int WINDOW_SIZE_X = 640;
 const int WINDOW_SIZE_Y = 480;
 
 // ★ゲーム性に影響を与える変数
-//     雪だるまの左右移動速度
+//      雪だるまの大きさ
+const double snow_man_size = 1.0;
+//      雪だるまの左右移動速度
 const float move_speed_snow_man = 1.0f;
-//     左右の木の最大間隔
+//      木の大きさ
+const double tree_size = 2.0;
+//      左右の木の最大間隔
 const float tree_space = 16.0f;
-//     ランダム木の前後間隔
+//      ランダム木の前後間隔
 const float random_tree_space = 8.0f;
 
 // 床の最大生成数
@@ -59,6 +63,7 @@ const float copper_shininess = 12.8;
 
 // 座標構造体
 struct Pos{
+
     float x;
     float y;
     float z;
@@ -71,6 +76,7 @@ struct Pos{
 
 // 匿名名前空間
 namespace{
+
     // カメラの座標
     Pos pos_camera;
     // 雪だるまの座標
@@ -97,8 +103,8 @@ namespace{
 // RAW読み込み関数
 void readRAWImage(char* filename, unsigned char image[128][128][3]);
 
-// 雪だるま描画関数
-void draw_snow_man(Pos pos);
+// 当たり判定関数
+bool is_hit();
 
 // キーボード処理関数
 void my_keyboard(unsigned char key, int x, int y);
@@ -109,6 +115,8 @@ void my_display();
 // 更新関数
 void my_idle();
 
+// ゲームリセット関数
+void reset();
 // 座標初期化関数
 void pos_init();
 // 光源初期化関数
@@ -120,6 +128,7 @@ void my_init();
 //  RAW読み込み関数
 // ================================
 void readRAWImage(char* filename, unsigned char image[128][128][3]){
+
     FILE *fp;
 
     if (fopen_s(&fp, filename, "r")){
@@ -129,52 +138,74 @@ void readRAWImage(char* filename, unsigned char image[128][128][3]){
 
     fread(image, 1, 128 * 128 * 3, fp);
     fclose(fp);
+
 }
 
 // ================================
 //  ランダム木のランダムな座標を生成する関数
 // ================================
 float get_tree_random_pos(){
+
     return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
+
 }
 
 // ================================
-//  雪だるま描画関数
+//  雪だるま描画クラス
 // ================================
-void draw_snow_man(Pos pos){
-    glPushMatrix();
+class SnowMan{
+private:
+    float x, z, y;
 
-    // 座標
-    glTranslatef(pos.x, pos.y, pos.z);
-    // 真珠
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, pearl_diffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, pearl_specular);
-    glMaterialfv(GL_FRONT, GL_AMBIENT, pearl_ambient);
-    glMaterialf(GL_FRONT, GL_SHININESS, pearl_shininess);
-    // 球
-    glutSolidSphere(1.0, 32, 32);
+public:
+    // コンストラクタ
+    SnowMan(Pos pos){
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
+    }
 
-    //   頭部分
-    glPushMatrix();
-    glTranslatef(0.0f, 1.0f, 0.0f);
-    glutSolidSphere(0.75, 32, 32);
-    glPopMatrix();
+    // 描画メソッド
+    void draw(Pos pos){
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
 
-    //   板部分
-    glPushMatrix();
-    glTranslatef(0.0f, -1.0f, 0.0f);
-    glScalef(1.0f, 1.0f, 4.0f);
-    //   緑のプラスチック
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, green_plastic_diffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, green_plastic_specular);
-    glMaterialfv(GL_FRONT, GL_AMBIENT, green_plastic_ambient);
-    glMaterialf(GL_FRONT, GL_SHININESS, green_plastic_shininess);
-    glutSolidCube(1.0);
-    glPopMatrix();
+        glPushMatrix();
 
-    glPopMatrix();
+        // 座標
+        glTranslatef(x, y, z);
+        // 真珠
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, pearl_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, pearl_specular);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, pearl_ambient);
+        glMaterialf(GL_FRONT, GL_SHININESS, pearl_shininess);
+        // 球
+        glutSolidSphere(snow_man_size, 32, 32);
 
-}
+        //   頭部分
+        glPushMatrix();
+        glTranslatef(0.0f, 1.0f, 0.0f);
+        glutSolidSphere(0.75, 32, 32);
+        glPopMatrix();
+
+        //   板部分
+        glPushMatrix();
+        glTranslatef(0.0f, -1.0f, 0.0f);
+        glScalef(1.0f, 1.0f, 4.0f);
+        //   緑のプラスチック
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, green_plastic_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, green_plastic_specular);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, green_plastic_ambient);
+        glMaterialf(GL_FRONT, GL_SHININESS, green_plastic_shininess);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        glPopMatrix();
+    }
+
+};
+SnowMan* snow_man;
 
 // ================================
 //  地面描画クラス
@@ -263,7 +294,7 @@ public:
         glMaterialfv(GL_FRONT, GL_SPECULAR, green_plastic_specular);
         glMaterialfv(GL_FRONT, GL_AMBIENT, green_plastic_ambient);
         glMaterialf(GL_FRONT, GL_SHININESS, green_plastic_shininess);
-        glutSolidCone(2.0, 2.0, 32, 32);
+        glutSolidCone(tree_size, 2.0, 32, 32);
         glPopMatrix();
 
         //   葉っぱ2段目
@@ -271,7 +302,7 @@ public:
         glTranslatef(0.0f, 1.0f, 0.0f);
         glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
         glColor3f(0.0f, 1.0f, 0.0f);
-        glutSolidCone(1.5, 2.0, 32, 32);
+        glutSolidCone(tree_size - 0.5, 2.0, 32, 32);
         glPopMatrix();
 
         glPopMatrix();
@@ -298,9 +329,24 @@ Tree* trees[MAX_TREE];
 Tree* random_trees[MAX_RANDOM_TREE];
 
 // ================================
+//  当たり判定関数
+// ================================
+bool is_hit(){
+
+    // 左右の当たり判定
+    if (pos_snow_man.x - snow_man_size < -tree_space + tree_size || 
+        pos_snow_man.x + snow_man_size > tree_space - tree_size){
+        return true;
+    }
+
+    return false;
+}
+
+// ================================
 //  キーボード処理関数
 // ================================
 void my_keyboard(unsigned char key, int x, int y){
+
     // ESCキーで終了
     if (key == 27) exit(0);
 
@@ -317,28 +363,7 @@ void my_keyboard(unsigned char key, int x, int y){
 
     // やり直し
     if (key == 'r'){
-        for (int i = 0; i < MAX_FLOORS; ++i){
-            delete floors[i];
-        }
-        for (int i = 0; i < MAX_TREE; ++i){
-            delete trees[i];
-        }
-        for (int i = 0; i < MAX_RANDOM_TREE; ++i){
-            delete random_trees[i];
-        }
-
-        for (int i = 0; i < MAX_FLOORS; ++i){
-            floors[i] = new Floor(pos_floor[i]);
-        }
-        for (int i = 0; i < MAX_TREE; ++i){
-            trees[i] = new Tree(pos_tree[i]);
-        }
-        for (int i = 0; i < MAX_RANDOM_TREE; ++i){
-            random_trees[i] = new Tree(pos_random_tree[i]);
-        }
-
-        pos_init();
-        front_speed_snow_man = 0.101f;
+        reset();
     }
 
     // 再描画
@@ -357,6 +382,7 @@ void my_reshape(int width, int height){
 //  描画関数
 // ================================
 void my_display(){
+
     // 画面クリア
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Zバッファ有効化
@@ -375,7 +401,7 @@ void my_display(){
         0.0, 1.0, 0.0);
 
     // 雪だるまを描画
-    draw_snow_man(pos_snow_man);
+    snow_man->draw(pos_snow_man);
     // 地面を描画
     for (int i = 0; i < MAX_FLOORS; ++i){
         floors[i]->draw(pos_snow_man.z);
@@ -406,13 +432,56 @@ void my_display(){
 //  更新関数
 // ================================
 void my_idle(){
+
     //雪だるまの前進
     pos_snow_man.z -= front_speed_snow_man;
     // カメラの前進
     pos_camera.z -= front_speed_snow_man;
 
+    // 当たり判定
+    if (is_hit()){
+        reset();
+    }
+    
     // 再描画
     glutPostRedisplay();
+
+}
+
+// ================================
+//  ゲームリセット関数
+// ================================
+void reset(){
+
+    // すべてのオブジェクトを削除
+    delete snow_man;
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        delete floors[i];
+    }
+    for (int i = 0; i < MAX_TREE; ++i){
+        delete trees[i];
+    }
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        delete random_trees[i];
+    }
+
+    // 座標を初期化
+    pos_init();
+
+    // すべてのオブジェクトを生成し直す
+    snow_man = new SnowMan(pos_snow_man);
+    for (int i = 0; i < MAX_FLOORS; ++i){
+        floors[i] = new Floor(pos_floor[i]);
+    }
+    for (int i = 0; i < MAX_TREE; ++i){
+        trees[i] = new Tree(pos_tree[i]);
+    }
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        random_trees[i] = new Tree(pos_random_tree[i]);
+    }
+
+    // 速度も初期化
+    front_speed_snow_man = 0.101f;
 
 }
 
@@ -420,6 +489,7 @@ void my_idle(){
 //  座標初期化関数
 // ================================
 void pos_init(){
+
     // カメラの座標初期化
     pos_camera = { 0.0f, 4.0f, 16.0f };
     // 雪だるまの座標初期化
@@ -454,6 +524,7 @@ void pos_init(){
 //  光源初期化関数
 // ================================
 void light_init(){
+
     // 光源属性の色
     float light_pos[] = { 1.0f, 1.0f, 1.0f, 0.0f };
     float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -475,6 +546,7 @@ void light_init(){
 //  初期化関数
 // ================================
 void my_init(){
+
     // アスペクト
     static float aspect = (float)WINDOW_SIZE_X / (float)WINDOW_SIZE_Y;
 
@@ -509,6 +581,9 @@ void my_init(){
     // 光源初期化
     light_init();
 
+    // 雪だるまの生成
+    snow_man = new SnowMan(pos_snow_man);
+
     // 床クラスの生成
     for (int i = 0; i < MAX_FLOORS; ++i){
         floors[i] = new Floor(pos_floor[i]);
@@ -533,6 +608,7 @@ void my_init(){
 //  メイン関数
 // ================================
 int main(int argc, char** argv){
+
     // 初期化
     glutInit(&argc, argv);
     my_init();
@@ -547,11 +623,15 @@ int main(int argc, char** argv){
     glutMainLoop();
 
     // メモリ解放
+    delete snow_man;
     for (int i = 0; i < MAX_FLOORS; ++i){
         delete floors[i];
     }
     for (int i = 0; i < MAX_TREE; ++i){
         delete trees[i];
+    }
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        delete random_trees[i];
     }
 
     return 0;
