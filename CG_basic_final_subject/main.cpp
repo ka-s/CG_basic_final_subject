@@ -103,6 +103,8 @@ namespace{
 // RAW読み込み関数
 void readRAWImage(char* filename, unsigned char image[128][128][3]);
 
+// ランダム木のランダムな座標を生成する関数
+float get_tree_random_pos();
 // 当たり判定関数
 bool is_hit();
 
@@ -124,35 +126,9 @@ void light_init();
 // 初期化関数
 void my_init();
 
-// ================================
-//  RAW読み込み関数
-// ================================
-void readRAWImage(char* filename, unsigned char image[128][128][3]){
-
-    FILE *fp;
-
-    if (fopen_s(&fp, filename, "r")){
-        fprintf(stderr, "Cannot open raw file %s\n", filename);
-        exit(1);
-    }
-
-    fread(image, 1, 128 * 128 * 3, fp);
-    fclose(fp);
-
-}
-
-// ================================
-//  ランダム木のランダムな座標を生成する関数
-// ================================
-float get_tree_random_pos(){
-
-    return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
-
-}
-
-// ================================
+// ################################
 //  雪だるま描画クラス
-// ================================
+// ################################
 class SnowMan{
 private:
     float x, z, y;
@@ -207,9 +183,9 @@ public:
 };
 SnowMan* snow_man;
 
-// ================================
+// ################################
 //  地面描画クラス
-// ================================
+// ################################
 class Floor{
 private:
     float x, y, z;
@@ -251,9 +227,9 @@ public:
 };
 Floor* floors[MAX_FLOORS];
 
-// ================================
+// ################################
 //  木描画クラス
-// ================================
+// ################################
 class Tree{
 private:
     float x, y, z;
@@ -322,11 +298,42 @@ public:
         }
     }
 
+    // 座標を返すメソッド
+    Pos get_pos(){
+        return{ x, y, z };
+    }
+
 };
 // 左右の木
 Tree* trees[MAX_TREE];
 // ランダムに出現する木
 Tree* random_trees[MAX_RANDOM_TREE];
+
+// ================================
+//  RAW読み込み関数
+// ================================
+void readRAWImage(char* filename, unsigned char image[128][128][3]){
+
+    FILE *fp;
+
+    if (fopen_s(&fp, filename, "r")){
+        fprintf(stderr, "Cannot open raw file %s\n", filename);
+        exit(1);
+    }
+
+    fread(image, 1, 128 * 128 * 3, fp);
+    fclose(fp);
+
+}
+
+// ================================
+//  ランダム木のランダムな座標を生成する関数
+// ================================
+float get_tree_random_pos(){
+
+    return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
+
+}
 
 // ================================
 //  当たり判定関数
@@ -337,6 +344,15 @@ bool is_hit(){
     if (pos_snow_man.x - snow_man_size < -tree_space + tree_size || 
         pos_snow_man.x + snow_man_size > tree_space - tree_size){
         return true;
+    }
+    // 各木との当たり判定
+    for (int i = 0; i < MAX_RANDOM_TREE; ++i){
+        if (
+            (pos_snow_man.x - random_trees[i]->get_pos().x)*(pos_snow_man.x - random_trees[i]->get_pos().x) +
+            (pos_snow_man.z - random_trees[i]->get_pos().z) * (pos_snow_man.z - random_trees[i]->get_pos().z) <
+            (snow_man_size + tree_size) + (snow_man_size + tree_size)
+            )
+            return true;
     }
 
     return false;
