@@ -91,9 +91,6 @@ namespace{
     // 雪だるまの初期前進速度
     float front_speed_snow_man = 0.101f;
 
-    // 画像データ
-    unsigned char texImage[128][128][3];
-
 }
 
 // --------------------------------
@@ -212,10 +209,10 @@ public:
         // 正方形を描画
         glBegin(GL_POLYGON);
         glNormal3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(x, y, z);
-        glVertex3f(x + floor_size, y, z);
-        glVertex3f(x + floor_size, y, z + floor_size);
-        glVertex3f(x, y, z + floor_size);
+        glTexCoord2f(0.0f, 0.0f), glVertex3f(x, y, z);
+        glTexCoord2f(1.0f, 0.0f), glVertex3f(x + floor_size, y, z);
+        glTexCoord2f(1.0f, 1.0f), glVertex3f(x + floor_size, y, z + floor_size);
+        glTexCoord2f(0.0f, 1.0f), glVertex3f(x, y, z + floor_size);
         glEnd();
 
         // 地面ループ制御
@@ -308,23 +305,6 @@ public:
 Tree* trees[MAX_TREE];
 // ランダムに出現する木
 Tree* random_trees[MAX_RANDOM_TREE];
-
-// ================================
-//  RAW読み込み関数
-// ================================
-void readRAWImage(char* filename, unsigned char image[128][128][3]){
-
-    FILE *fp;
-
-    if (fopen_s(&fp, filename, "r")){
-        fprintf(stderr, "Cannot open raw file %s\n", filename);
-        exit(1);
-    }
-
-    fread(image, 1, 128 * 128 * 3, fp);
-    fclose(fp);
-
-}
 
 // ================================
 //  ランダム木のランダムな座標を生成する関数
@@ -614,9 +594,6 @@ void my_init(){
     for (int i = 0; i < MAX_RANDOM_TREE; ++i){
         random_trees[i] = new Tree(pos_random_tree[i]);
     }
-
-    // 画像読み込み
-    //readRAWImage("texture1.raw", texImage);
 
 }
 
