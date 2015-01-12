@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <ctime>
 #include <GL/glut.h>
 
 using namespace std;
@@ -14,6 +15,9 @@ using namespace std;
 // --------------------------------
 //  定数
 // --------------------------------
+
+// 円周率
+const float PI = 3.14159265359f;
 
 // ウィンドウサイズ
 const int WINDOW_SIZE_X = 640;
@@ -77,6 +81,9 @@ struct Pos{
 // 匿名名前空間
 namespace{
 
+    // プログラムが実行されてからの更新回数
+    int global_time = 0;
+
     // カメラの座標
     Pos pos_camera;
     // 雪だるまの座標
@@ -90,6 +97,11 @@ namespace{
 
     // 雪だるまの初期前進速度
     float front_speed_snow_man = 0.101f;
+
+    // 当たり判定フラグ
+    bool f_hit = false;
+    // リセットフラグ
+    bool f_reset = false;
 
 }
 
@@ -129,6 +141,7 @@ void my_init();
 class SnowMan{
 private:
     float x, z, y;
+    float effect_long;
 
 public:
     // コンストラクタ
@@ -136,6 +149,8 @@ public:
         x = pos.x;
         y = pos.y;
         z = pos.z;
+
+        effect_long = 0;
     }
 
     // 描画メソッド
@@ -177,6 +192,33 @@ public:
         glPopMatrix();
     }
 
+    // 破壊エフェクト描画メソッド
+    void draw_effect(){
+
+        for (int i = 0; i < 16; ++i){
+            glPushMatrix();
+
+            // 座標
+            glTranslatef(x + cos(360.0f / 16.0f * (float)i) * effect_long, y + sin(360.0f / 16.0f * (float)i) * effect_long, z);
+            // 真珠
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, pearl_diffuse);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, pearl_specular);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, pearl_ambient);
+            glMaterialf(GL_FRONT, GL_SHININESS, pearl_shininess);
+            // 球
+            glutSolidSphere(0.4f, 32, 32);
+
+            glPopMatrix();
+        }
+        if (effect_long < 4.0f){
+            effect_long += 0.04f;
+        }
+        else{
+            f_reset = true;
+        }
+
+    }
+
 };
 SnowMan* snow_man;
 
@@ -209,10 +251,10 @@ public:
         // 正方形を描画
         glBegin(GL_POLYGON);
         glNormal3f(0.0f, 1.0f, 0.0f);
-        glTexCoord2f(0.0f, 0.0f), glVertex3f(x, y, z);
-        glTexCoord2f(1.0f, 0.0f), glVertex3f(x + floor_size, y, z);
-        glTexCoord2f(1.0f, 1.0f), glVertex3f(x + floor_size, y, z + floor_size);
-        glTexCoord2f(0.0f, 1.0f), glVertex3f(x, y, z + floor_size);
+        glVertex3f(x, y, z);
+        glVertex3f(x + floor_size, y, z);
+        glVertex3f(x + floor_size, y, z + floor_size);
+        glVertex3f(x, y, z + floor_size);
         glEnd();
 
         // 地面ループ制御
@@ -385,8 +427,6 @@ void my_display(){
     glEnable(GL_DEPTH_TEST);
     // 光源有効化
     glEnable(GL_LIGHTING);
-    // テクスチャ有効化
-    glEnable(GL_TEXTURE_2D);
     // 行列の初期化
     glLoadIdentity();
 
@@ -396,8 +436,15 @@ void my_display(){
         pos_snow_man.x, pos_snow_man.y, pos_snow_man.z,
         0.0, 1.0, 0.0);
 
-    // 雪だるまを描画
-    snow_man->draw(pos_snow_man);
+    // 雪だるま破壊エフェクト描画
+    if (f_hit){
+        snow_man->draw_effect();
+    }
+    else{
+        // 雪だるまを描画
+        snow_man->draw(pos_snow_man);
+    }
+
     // 地面を描画
     for (int i = 0; i < MAX_FLOORS; ++i){
         floors[i]->draw(pos_snow_man.z);
@@ -413,8 +460,6 @@ void my_display(){
         random_trees[i]->draw(pos_snow_man.z, random_tree_space);
     }
 
-    // テクスチャ無効化
-    glDisable(GL_TEXTURE_2D);
     // 光源無効化
     glDisable(GL_LIGHTING);
     // Zバッファ無効化
@@ -429,18 +474,24 @@ void my_display(){
 // ================================
 void my_idle(){
 
-    //雪だるまの前進
-    pos_snow_man.z -= front_speed_snow_man;
-    // カメラの前進
-    pos_camera.z -= front_speed_snow_man;
-
     // 当たり判定
     if (is_hit()){
+        f_hit = true;
+    }
+    else{
+        //雪だるまの前進
+        pos_snow_man.z -= front_speed_snow_man;
+        // カメラの前進
+        pos_camera.z -= front_speed_snow_man;
+    }
+    // リセット判定
+    if (f_reset){
         reset();
     }
-    
+
     // 再描画
     glutPostRedisplay();
+    global_time++;
 
 }
 
@@ -478,6 +529,10 @@ void reset(){
 
     // 速度も初期化
     front_speed_snow_man = 0.101f;
+
+    // フラグ初期化
+    f_hit = false;
+    f_reset = false;
 
 }
 
@@ -555,13 +610,11 @@ void my_init(){
     // ウィンドウタイトル
     glutCreateWindow("Final_Subject");
     // 背景色設定
-    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     // 滑らかなライティングに設定
     glShadeModel(GL_SMOOTH);
     // Zバッファ使用
     glEnable(GL_DEPTH_TEST);
-    // 画像データパックの使用
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     // 描画領域の設定
     glViewport(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 
