@@ -21,7 +21,7 @@ using namespace std;
 const float PI = 3.14159265359f;
 
 // フレームレート
-const int FPS = 61;
+const int FPS = 60;
 
 // ウィンドウサイズ
 const int WINDOW_SIZE_X = 640;
@@ -100,7 +100,7 @@ namespace{
     Pos pos_random_tree[MAX_RANDOM_TREE];
 
     // 雪だるまの初期前進速度
-    float front_speed_snow_man = 0.101f;
+    float front_speed_snow_man = 1.0f;
 
     // 当たり判定フラグ
     bool f_hit = false;
@@ -141,6 +141,7 @@ void my_init();
 
 // ################################
 //  フレームレート制御クラス
+//      環境差をなくすために実装
 //      (制御と言っても早すぎた更新を止めるだけ)
 // ################################
 class FPSManager{
@@ -205,6 +206,7 @@ class SnowMan{
 private:
     float x, z, y;
     float effect_long;
+    float effect_count;
 
 public:
     // コンストラクタ
@@ -214,6 +216,7 @@ public:
         z = pos.z;
 
         effect_long = 0;
+        effect_count = 0;
     }
 
     // 描画メソッド
@@ -273,12 +276,14 @@ public:
 
             glPopMatrix();
         }
-        if (effect_long < 4.0f){
-            effect_long += 0.04f;
+        if (effect_count <= 60){
+            effect_long = sin(PI / 2 / 60 * effect_count) * 6.0f;
         }
         else{
+            effect_count = 0;
             f_reset = true;
         }
+        effect_count++;
 
     }
 
@@ -459,11 +464,11 @@ void my_keyboard(unsigned char key, int x, int y){
     }
 
     // 加速減速
-    if (key == 'w') front_speed_snow_man += 0.02;
-    if (key == 's') front_speed_snow_man -= 0.02;
+    //if (key == 'w') front_speed_snow_man += 0.02;
+    //if (key == 's') front_speed_snow_man -= 0.02;
     // スピード制御
-    if (front_speed_snow_man > 10.0f) front_speed_snow_man = 2.0f;
-    if (front_speed_snow_man < 0.0f) front_speed_snow_man = 0.001f;
+    //if (front_speed_snow_man > 10.0f) front_speed_snow_man = 2.0f;
+    //if (front_speed_snow_man < 0.0f) front_speed_snow_man = 0.001f;
 
     // やり直し
     if (key == 'r'){
@@ -601,7 +606,7 @@ void reset(){
     }
 
     // 速度も初期化
-    front_speed_snow_man = 0.101f;
+    front_speed_snow_man = 1.0f;
 
     // フラグ初期化
     f_hit = false;
