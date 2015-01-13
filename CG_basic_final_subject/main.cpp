@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cmath>
 #include <ctime>
+#include <Windows.h>
 #include <GL/glut.h>
 
 using namespace std;
@@ -18,6 +19,9 @@ using namespace std;
 
 // 円周率
 const float PI = 3.14159265359f;
+
+// フレームレート
+const int FPS = 61;
 
 // ウィンドウサイズ
 const int WINDOW_SIZE_X = 640;
@@ -134,6 +138,65 @@ void pos_init();
 void light_init();
 // 初期化関数
 void my_init();
+
+// ################################
+//  フレームレート制御クラス
+//      (制御と言っても早すぎた更新を止めるだけ)
+// ################################
+class FPSManager{
+private:
+    // 現在のFPS
+    float now_fps;
+    // 更新回数
+    int frame_count;
+    // 現在のミリ秒
+    int start_clock;
+
+public:
+    // コンストラクタ
+    FPSManager(){
+        now_fps = 0.0f;
+        frame_count = 0;
+        start_clock = 0;
+    }
+
+    // 更新メソッド
+    void update(){
+        // 一番最初のフレーム
+        if (frame_count == 0){
+            start_clock = (int)clock();
+        }
+        // 更新回数が規定回数達したら
+        if (frame_count == FPS){
+            int hoge = (int)clock();
+            // 現在のFPSを計算
+            now_fps = 1000.0f / (((float)hoge - (float)start_clock) / (float)(FPS));
+            frame_count = 0;
+            start_clock = hoge;
+        }
+        frame_count++;
+    }
+
+    // 現在のFPSを描画するメソッド
+    void draw(){
+        cout << now_fps << endl;
+    }
+
+    // 更新制御メソッド
+    void wait(){
+        // 規定回数更新にかかった時間
+        int spend_time = (int)clock() - start_clock;
+        // かかるべき時間
+        int wait_time = frame_count * 1000 / FPS - spend_time;
+
+        // 更新を停止
+        if (wait_time > 0){
+            Sleep(wait_time);
+        }
+    }
+
+};
+FPSManager* fps_manager;
 
 // ################################
 //  雪だるま描画クラス
@@ -388,9 +451,12 @@ void my_keyboard(unsigned char key, int x, int y){
     // ESCキーで終了
     if (key == 27) exit(0);
 
-    // 左右移動
-    if (key == 'a') pos_snow_man.x -= move_speed_snow_man;
-    if (key == 'd') pos_snow_man.x += move_speed_snow_man;
+    // 木にあたってなけれらば左右移動可能
+    if (f_hit != true){
+        // 左右移動
+        if (key == 'a') pos_snow_man.x -= move_speed_snow_man;
+        if (key == 'd') pos_snow_man.x += move_speed_snow_man;
+    }
 
     // 加速減速
     if (key == 'w') front_speed_snow_man += 0.02;
@@ -473,6 +539,10 @@ void my_display(){
 //  更新関数
 // ================================
 void my_idle(){
+    // フレームレート制御データ更新
+    fps_manager->update();
+    // 現在のFPSをコンソールに描画
+    fps_manager->draw();
 
     // 当たり判定
     if (is_hit()){
@@ -492,6 +562,9 @@ void my_idle(){
     // 再描画
     glutPostRedisplay();
     global_time++;
+
+    // フレームレート制御
+    fps_manager->wait();
 
 }
 
@@ -630,6 +703,9 @@ void my_init(){
     // 光源初期化
     light_init();
 
+    // FPS制御クラスの生成
+    fps_manager = new FPSManager();
+
     // 雪だるまの生成
     snow_man = new SnowMan(pos_snow_man);
 
@@ -669,6 +745,7 @@ int main(int argc, char** argv){
     glutMainLoop();
 
     // メモリ解放
+    delete fps_manager;
     delete snow_man;
     for (int i = 0; i < MAX_FLOORS; ++i){
         delete floors[i];
