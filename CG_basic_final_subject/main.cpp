@@ -6,6 +6,7 @@
 // @author  Kazuma Ito
 
 #include <iostream>
+#include <random>
 #include <cmath>
 #include <ctime>
 #include <Windows.h>
@@ -84,6 +85,12 @@ struct Pos{
 
 // 匿名名前空間
 namespace{
+    // ランダムデバイス
+    random_device rd;
+    // メルセンヌツイスター
+    mt19937 my_mersenne_twister(rd());
+    // 一様分布なランダム
+    uniform_int_distribution<int> mt_random((int)-tree_space, (int)tree_space);
 
     // プログラムが実行されてからの更新回数
     int global_time = 0;
@@ -421,7 +428,8 @@ Tree* random_trees[MAX_RANDOM_TREE];
 // ================================
 float get_tree_random_pos(){
 
-    return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
+    //return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
+    return (float)mt_random(my_mersenne_twister);
 
 }
 
