@@ -2,12 +2,30 @@
 ///  CG基礎最終課題 
 /// ================================
 
-// 雪だるまスノボーゲーム
-//   A,Dキーで雪だるまを木にぶつからないようにそうさしよう！
+// !!!!!!!!!!!!!!!!! 注意 !!!!!!!!!!!!!!!!
 //
+// メルセンヌツイスターを使っているため、
+// C++11規格に対応しているVisual Studio 12以降じゃないと多分動きません。
+//
+// Windowsのみ動作します。
+//
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// ---------------- 説明文 ----------------
+// 雪だるまスノボーゲーム
+//   実行すると雪だるまがスノボーに乗って進みますので、
+//   A,Dキーで雪だるまを木にぶつからないように操作してください。
+//   おまけで黒いウィンドウの方にフレームレートが描画されます。
+//
+// ＜アピールポイント＞
+// ゲーム風にしたこと。
 // 当たり判定を実装したこと。
 // 木にぶつかったときのエフェクトを実装したこと。
 // 環境によって動作が異ならないようにフレームレート制御していること。
+// ＜反省点＞
+// リシェープに対応していない。
+// ソースのクラス設計がめちゃくちゃ。
+// ----------------------------------------
 
 // @date    2015-01-16
 // @author  Kazuma Ito
@@ -432,7 +450,6 @@ Tree* random_trees[MAX_RANDOM_TREE];
 // ================================
 float get_tree_random_pos(){
 
-    //return (float)(rand() % ((int)tree_space * 2)) + 1.0f - tree_space;
     return (float)mt_random(my_mersenne_twister);
 
 }
@@ -474,13 +491,6 @@ void my_keyboard(unsigned char key, int x, int y){
         if (key == 'a') pos_snow_man.x -= move_speed_snow_man;
         if (key == 'd') pos_snow_man.x += move_speed_snow_man;
     }
-
-    // 加速減速
-    //if (key == 'w') front_speed_snow_man += 0.02;
-    //if (key == 's') front_speed_snow_man -= 0.02;
-    // スピード制御
-    //if (front_speed_snow_man > 10.0f) front_speed_snow_man = 2.0f;
-    //if (front_speed_snow_man < 0.0f) front_speed_snow_man = 0.001f;
 
     // やり直し
     if (key == 'r'){
